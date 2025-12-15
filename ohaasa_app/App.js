@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, Keyboard, Share } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, Keyboard, Share, Modal, ScrollView } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Linking } from 'react-native';
 
@@ -10,6 +10,8 @@ export default function App() {
   const [myFortune, setMyFortune] = useState(null);   // 서버에서 찾은 내 운세 데이터
   const [loading, setLoading] = useState(false);
   const [isSaved, setIsSaved] = useState(false); // 생일 저장 여부
+  const [allFortunes, setAllFortunes] = useState([]);
+  const [modalVisible, setModalVisible] = useState(false);
 
   // 본인 IP로 수정 필수!
   const API_URL = 'http://192.168.35.46:3000/fortune'; 
@@ -78,6 +80,8 @@ export default function App() {
     try {
       const response = await fetch(API_URL);
       const json = await response.json();
+
+      setAllFortunes(json);
       
       const target = json.find(item => item.name === userZodiac);
       
@@ -178,6 +182,12 @@ export default function App() {
             </View>
           </View>
 
+          <TouchableOpacity style={styles.rankBtn} onPress={() => setModalVisible(true)}>            
+            <Text style={styles.rankBtnText}>🏆 전체 별자리 순위 보기</Text>
+          </TouchableOpacity>
+
+          <View style={{height: 10}} />
+
           <TouchableOpacity style={styles.shareBtn} onPress={onShare}>            
             <Text style={styles.BtnText}>📤 친구에게 공유하기</Text>
           </TouchableOpacity>
@@ -189,6 +199,39 @@ export default function App() {
       ) : (
         <Text>데이터를 불러오는 중...</Text>
       )}
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => setModalVisible(false)}
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalView}>
+            <Text style={styles.modalTitle}>🏆 오늘의 랭킹</Text>
+            
+            <ScrollView style={{width: '100%'}}>
+              {allFortunes.map((item, index) => (
+                <View key={index} style={[
+                  styles.rankItem, 
+                  item.name === userZodiac && styles.myRankItem // 내 별자리는 특별하게 표시
+                ]}>
+                  <Text style={[styles.rankItemNum, item.rank <= 3 && {color:'#FFD700'}]}>
+                    {item.rank}위
+                  </Text>
+                  <Text style={[styles.rankItemName, item.name === userZodiac && {fontWeight:'bold'}]}>
+                    {item.name}
+                  </Text>
+                </View>
+              ))}
+            </ScrollView>
+
+            <TouchableOpacity style={styles.closeBtn} onPress={() => setModalVisible(false)}>
+              <Text style={styles.closeBtnText}>닫기</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -203,11 +246,11 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 14, color: '#888', marginBottom: 20 },
   row: { flexDirection: 'row', gap: 10, marginBottom: 20 },
   input: { borderWidth: 1, borderColor: '#ddd', padding: 15, width: 100, borderRadius: 10, textAlign: 'center', fontSize: 18, backgroundColor:'#FAFAFA' },
-  btn: { backgroundColor: '#d0aeffff', paddingVertical: 15, paddingHorizontal: 40, borderRadius: 10, width:'100%', alignItems:'center' },
+  btn: { backgroundColor: '#1A1A2E', paddingVertical: 15, paddingHorizontal: 40, borderRadius: 10, width:'100%', alignItems:'center' },
   btnText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
 
   // 결과 화면 스타일
-  resultContainer: { flex: 1, backgroundColor: '#d0aeffff', alignItems: 'center', justifyContent: 'center' },
+  resultContainer: { flex: 1, backgroundColor: '#1A1A2E', alignItems: 'center', justifyContent: 'center' },
   header: { position: 'absolute', top: 60, width: '100%', alignItems: 'center' },
   headerTitle: { color: 'white', fontSize: 20, fontWeight: 'bold', marginBottom: 10 },
   resetText: { color: 'rgba(255,255,255,0.7)', fontSize: 12, textDecorationLine:'underline' },
@@ -224,6 +267,23 @@ const styles = StyleSheet.create({
   value: { color: '#333', fontWeight: 'bold' },
 
   shareBtn: { backgroundColor: '#4A90E2', width: '100%', padding: 15, borderRadius: 12, alignItems: 'center', marginBottom: 10},
-  musicBtn: { backgroundColor: '#333', width: '100%', padding: 15, borderRadius: 12, alignItems: 'center' },
-  BtnText: { color: 'white', fontWeight: 'bold' }
+  musicBtn: { backgroundColor: '#555', width: '100%', padding: 15, borderRadius: 12, alignItems: 'center' },
+  BtnText: { color: 'white', fontWeight: 'bold' },
+
+  rankBtn: { backgroundColor: '#F0F0F0', width: '100%', padding: 15, borderRadius: 12, alignItems: 'center', borderWidth:1, borderColor:'#ddd' },
+  rankBtnText: { color: '#333', fontWeight: 'bold' },
+
+  modalContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.5)' },
+  modalView: { width: '80%', height: '60%', backgroundColor: 'white', borderRadius: 20, padding: 20, alignItems: 'center', elevation: 10 },
+  modalTitle: { fontSize: 22, fontWeight: 'bold', marginBottom: 20, color:'#333' },
+  
+  rankItem: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#eee', width:'100%' },
+  myRankItem: { backgroundColor: '#F0F8FF', borderRadius: 10, paddingHorizontal: 10, borderBottomWidth:0 }, // 내 별자리는 살짝 파란 배경
+  
+  rankItemNum: { fontSize: 18, fontWeight: 'bold', width: 50, color:'#555' },
+  rankItemName: { fontSize: 16, color: '#333', marginRight: 5 },
+  
+  closeBtn: { marginTop: 20, padding: 10 },
+  closeBtnText: { color: '#1A1A2E', fontWeight: 'bold', fontSize: 16 }
+
 });

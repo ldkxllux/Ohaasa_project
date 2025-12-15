@@ -86,7 +86,9 @@ async function scrapeFortune() {
         }
       }
     }
-    
+
+    results.sort((a, b) => a.rank - b.rank);
+
     console.log(`✅ 총 ${results.length}개 데이터 수집 완료!`);
     return results;
 
