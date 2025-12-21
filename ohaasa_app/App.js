@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, Keyboard, Share, Modal, ScrollView } from 'react-native';
+import { StyleSheet, Text, View, TextInput, TouchableOpacity, Alert, Keyboard, Share, Modal, ScrollView, ActivityIndicator } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Linking } from 'react-native';
 
@@ -36,7 +36,7 @@ export default function App() {
     }
   };
 
-  // 3. 별자리 계산기
+  // 별자리 계산기
   function calculateZodiac(month, day) {
     const m = parseInt(month);
     const d = parseInt(day);
@@ -55,7 +55,7 @@ export default function App() {
     return "물고기자리";
   };
 
-  // 4. "확인" 버튼 눌렀을 때 실행
+  // 버튼 눌렀을 때 실행
   async function handleSave() {
     if (!Month || !Day) {
       Alert.alert("입력 오류", "월과 일을 모두 입력해주세요!");
@@ -70,10 +70,10 @@ export default function App() {
     
     setUserZodiac(zodiacName);
     setIsSaved(true);
-    fetchMyFortune(userZodiac);
+    fetchMyFortune(zodiacName);
   };
 
-  // 5. 서버에서 내 운세 데이터 가져오기
+  // 서버에서 내 운세 데이터 가져오기
   async function fetchMyFortune(userZodiac) {
     setLoading(true);
 
@@ -95,13 +95,13 @@ export default function App() {
     setLoading(false);
   };
 
-  // 6. 행운의 색상으로 유튜브 플레이리스트 열기
+  // 행운의 색상으로 유튜브 플레이리스트 열기
   function playMusic(color) {
     const query = `${color} playlist`;
     Linking.openURL(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`);
   };
 
-  // 7. 생일 다시 입력하기
+  // 생일 다시 입력하기
   async function resetInfo() {
     await AsyncStorage.removeItem('userZodiac');
 
@@ -111,6 +111,7 @@ export default function App() {
     setMyFortune(null);
   };
 
+  // 운세 공유하기
   const onShare = async () => {
     try {
       const message = `[오하아사 오늘의 운세]\n\n🌟 ${myFortune.name} (${myFortune.rank}위)\n\n"${myFortune.content}"\n\n🎨 행운색: ${myFortune.luckyColor}\n🍀 행운템: ${myFortune.luckyItem}`;
@@ -126,12 +127,13 @@ export default function App() {
   if (loading) {
     return (
       <View style={styles.center}>
+        <ActivityIndicator size="large" color="#1A1A2E" />
         <Text style={{marginTop: 10}}>오늘의 운세를 분석 중입니다...🔮</Text>
       </View>
     );
   }
 
-  // [화면 1] 생일 입력창 (저장된 게 없을 때)
+  // 생일 입력창 (저장된 게 없을 때 보이기)
   if (!isSaved) {
     return (
       <View style={styles.container}>
@@ -152,7 +154,7 @@ export default function App() {
     );
   }
 
-  // [화면 2] 결과 화면 (저장된 게 있을 때)
+  // 운세 결과 화면 (저장된 게 있을 때 바로 운세 보여주기)
   return (
     <View style={styles.resultContainer}>
       <View style={styles.header}>
